@@ -1,6 +1,6 @@
 {
   "name": "@monastic.panic/react-docgen",
-  "version": "5.0.0-beta.3",
+  "version": "5.0.0",
   "description": "A CLI and toolkit to extract information from React components for documentation generation.",
   "repository": {
     "type": "git",
@@ -86,5 +86,5 @@
   },
   "readme": "ERROR: No README data found!",
   "homepage": "https://github.com/reactjs/react-docgen#readme",
-  "_id": "@monastic.panic/react-docgen@5.0.0-beta.2"
+  "_id": "@monastic.panic/react-docgen@5.0.0-beta.3"
 }
