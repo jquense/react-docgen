@@ -97,9 +97,9 @@ describe('findAllComponentDefinitions', () => {
       const source = `
         import React from 'React';
         class ComponentA extends React.Component {}
-        class ComponentB { render() {} }
-        var ComponentC = class extends React.Component {}
-        var ComponentD = class { render() {} }
+        class ComponentB extends Foo { render() {} }
+        var ComponentC = class extends React.PureComponent {}
+        var ComponentD = class extends Bar { render() {} }
         class NotAComponent {}
       `;
 
@@ -223,6 +223,32 @@ describe('findAllComponentDefinitions', () => {
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(1);
       expect(result[0].value.type).toEqual('CallExpression');
+    });
+  });
+
+  describe('regressions', () => {
+    it('finds component wrapped in HOC', () => {
+      const source = `
+        /**
+         * @flow
+         */
+        import * as React from 'react';
+
+        type Props = $ReadOnly<{|
+          tabs: $ReadOnlyArray<string>,
+        |}>;
+
+        const TetraAdminTabs = React.memo<Props>((props: Props) => (
+          <div></div>
+        ));
+
+        export default TetraAdminTabs;
+      `;
+
+      const result = parse(source);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBe(1);
+      expect(result[0].value.type).toEqual('ArrowFunctionExpression');
     });
   });
 });
