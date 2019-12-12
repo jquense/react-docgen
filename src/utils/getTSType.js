@@ -8,14 +8,6 @@
  */
 
 import { namedTypes as t } from 'ast-types';
-import getPropertyName from './getPropertyName';
-import printValue from './printValue';
-import getTypeAnnotation from '../utils/getTypeAnnotation';
-import resolveToValue from '../utils/resolveToValue';
-import { resolveObjectToNameArray } from '../utils/resolveObjectKeysToArray';
-import getTypeParameters, {
-  type TypeParameters,
-} from '../utils/getTypeParameters';
 import type {
   FlowElementsType,
   FlowFunctionArgumentType,
@@ -25,6 +17,14 @@ import type {
   FlowTypeDescriptor,
   TSFunctionSignatureType,
 } from '../types';
+import getTypeAnnotation from '../utils/getTypeAnnotation';
+import getTypeParameters, {
+  type TypeParameters,
+} from '../utils/getTypeParameters';
+import { resolveObjectToNameArray } from '../utils/resolveObjectKeysToArray';
+import resolveToValue from '../utils/resolveToValue';
+import getPropertyName from './getPropertyName';
+import printValue from './printValue';
 
 const tsTypes = {
   TSAnyKeyword: 'any',
@@ -100,7 +100,11 @@ function handleTSTypeReference(
   }
 
   if (typeParams && typeParams[type.name]) {
-    type = getTSTypeWithResolvedTypes(resolvedPath, typeParams);
+    // prevents recursion when generics have the same name
+    const narrowed = { ...typeParams };
+    delete narrowed[type.name];
+
+    type = getTSTypeWithResolvedTypes(resolvedPath, narrowed);
   }
 
   if (resolvedPath && resolvedPath.node.typeAnnotation) {
@@ -394,7 +398,7 @@ function getTSTypeWithResolvedTypes(
   const node = path.node;
   let type: ?FlowTypeDescriptor;
   const isTypeAlias = t.TSTypeAliasDeclaration.check(path.parentPath.node);
-
+  // console.log(node.type, typeParams);
   // When we see a typealias mark it as visited so that the next
   // call of this function does not run into an endless loop
   if (isTypeAlias) {
@@ -406,6 +410,7 @@ function getTSTypeWithResolvedTypes(
       // if we already resolved the type simple return it
       return visitedTypes[path.parentPath.node.id.name];
     }
+    // console.log(' TYYPPPPPPPRE AAAAAl', path.parentPath.node.id.name);
     // mark the type as visited
     visitedTypes[path.parentPath.node.id.name] = true;
   }
@@ -418,6 +423,7 @@ function getTSTypeWithResolvedTypes(
       value: node.literal.raw || `${node.literal.value}`,
     };
   } else if (node.type in namedTypes) {
+    // console.log('RESOLVE', node.typeName);
     type = namedTypes[node.type](path, typeParams);
   }
 
@@ -448,6 +454,7 @@ export default function getTSType(
   // Before: in case the detection threw and we rerun again
   // After: cleanup memory after we are done here
   visitedTypes = {};
+  // console.log('START', typeParamMap);
   const type = getTSTypeWithResolvedTypes(path, typeParamMap);
   visitedTypes = {};
 
